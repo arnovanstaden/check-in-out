@@ -1,5 +1,7 @@
 import { App, ExpressReceiver, InteractiveMessage } from '@slack/bolt';
 import dotenv from 'dotenv';
+import { checkInUser, checkUserIsCheckedIn } from './appwrite';
+import { getTimeFromTimestamp } from './dev';
 dotenv.config();
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET!;
@@ -22,25 +24,29 @@ const app = new App({
 let checkedInUsers: { id: string, name: string }[] = [];
 let checkedOutUsers: { id: string, name: string }[] = [];
 
-app.command('/checkin', async ({ command, ack, respond }) => {
+export interface User {
+  id: string;
+  name: string;
+  timestamp: string;
+}
+
+app.command('/checkin', async ({ command, ack }) => {
   await ack();
   const { user_id, user_name, channel_id } = command;
+  console.log(command)
 
-  // Add the user to the checked-in list if not already there
-  if (!checkedInUsers.some(user => user.id === user_id)) {
-    checkedInUsers.push({
-      id: user_id,
-      name: user_name.charAt(0).toUpperCase() + user_name.slice(1)
-    });
+  const userIsCheckedIn = await checkUserIsCheckedIn(user_id);
+  if (userIsCheckedIn) {
+    return
   }
 
-  const userList = checkedInUsers.map(user => `✅ *${user.name}* checked in`).join('\n');
+  const newlyCheckedInUser = await checkInUser(user_id, user_name);
 
   try {
     await app.client.chat.postMessage({
       token: process.env.SLACK_BOT_TOKEN,
       channel: channel_id,
-      text: userList,
+      text: `✔️ *${newlyCheckedInUser.name}* checked in at ${getTimeFromTimestamp(newlyCheckedInUser.timestamp)}`,
       attachments: [
         {
           text: 'Who else is here?',
@@ -72,19 +78,20 @@ app.action({ callback_id: 'check_in_callback' }, async ({ body, ack }) => {
   }
 
   const interactiveBody = body as InteractiveMessage;
-  const { message_ts } = interactiveBody;
+  console.log(interactiveBody);
+  const { message_ts, original_message } = interactiveBody;
   const userId = interactiveBody.user.id;
   const userName = interactiveBody.user.name.charAt(0).toUpperCase() + interactiveBody.user.name.slice(1);
 
-  // Add the user to the checked-in list if not already there
-  if (!checkedInUsers.some(user => user.id === userId)) {
-    checkedInUsers.push({ id: userId, name: userName });
+
+  const userIsCheckedIn = await checkUserIsCheckedIn(userId);
+  if (userIsCheckedIn) {
+    return
   }
 
-  // Remove the user from the checked-out list if they are there
-  checkedOutUsers = checkedOutUsers.filter(user => user.id !== userId);
-
-  const userList = checkedInUsers.map(user => `✅ *${user.name}* checked in`).join('\n');
+  const newlyCheckedInUser = await checkInUser(userId, userName);
+  const userCheckInText = `✔️ *${newlyCheckedInUser.name}* checked in at ${getTimeFromTimestamp(newlyCheckedInUser.timestamp)}`;
+  const newMessageText = original_message ? `${original_message.text}\n${userCheckInText}` : userCheckInText;
 
   // Update the original message with the list of checked-in users
   try {
@@ -92,7 +99,7 @@ app.action({ callback_id: 'check_in_callback' }, async ({ body, ack }) => {
       token: process.env.SLACK_BOT_TOKEN,
       channel: body.channel!.id!,
       ts: message_ts!,
-      text: userList,
+      text: newMessageText,
       attachments: [
         {
           text: 'Who else is here?',
@@ -126,17 +133,14 @@ app.command('/checkout', async ({ command, ack, respond }) => {
       id: user_id,
       name: user_name.charAt(0).toUpperCase() + user_name.slice(1)
     });
+  } else {
+    return;
   }
 
-  const userList = checkedOutUsers.map(user => `❌ *${user.name}* checked out`).join('\n');
+  const userList = checkedOutUsers.map(user => `✖️ *${user.name}* checked out`).join('\n');
 
   // Join the channel before sending a message
   try {
-    await app.client.conversations.join({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: channel_id,
-    });
-
     // Send a message with a "Check Out" button
     await app.client.chat.postMessage({
       token: process.env.SLACK_BOT_TOKEN,
@@ -182,9 +186,11 @@ app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, }) => {
   // Add the user to the checked-in list if not already there
   if (!checkedOutUsers.some(user => user.id === userId)) {
     checkedOutUsers.push({ id: userId, name: userName });
+  } else {
+    return;
   }
 
-  const userList = checkedOutUsers.map(user => `❌ *${user.name}* checked out`).join('\n');
+  const userList = checkedOutUsers.map(user => `✖️ *${user.name}* checked out`).join('\n');
 
   // Update the original message with the list of checked-out users
   try {
