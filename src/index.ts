@@ -20,7 +20,6 @@ const app = new App({
   token: SLACK_BOT_TOKEN,
   receiver,
   port: Number(process.env.PORT) || 3000,
-  logLevel: LogLevel.DEBUG,
 });
 
 app.use(async ({ next }) => {
@@ -258,3 +257,5 @@ receiver.router.get('/auth/slack', async (req, res) => {
 
   console.log('⚡️ Bolt app is running!');
 })();
+
+module.exports = app;
