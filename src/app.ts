@@ -13,6 +13,7 @@ const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET!;
 const receiver = new ExpressReceiver({
   signingSecret: SLACK_SIGNING_SECRET,
   endpoints: '/slack/events',
+  logLevel: LogLevel.DEBUG,
 });
 
 // Initializes your app with your bot token and signing secret
