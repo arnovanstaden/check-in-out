@@ -23,10 +23,6 @@ const app = new App({
   port: Number(process.env.PORT) || 3000,
 });
 
-app.use(async ({ next }) => {
-  await next();
-});
-
 export interface User {
   id: string;
   name: string;
