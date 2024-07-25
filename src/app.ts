@@ -256,9 +256,12 @@ receiver.router.get('/', async (req, res) => {
   res.send('Home!');
 });
 
+receiver.router.head('/uptime', async (req, res) => {
+  res.send('OK');
+});
+
 (async () => {
   // Start your app
   await app.start();
-
   console.log('⚡️ Bolt app is running!');
 })();
