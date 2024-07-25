@@ -1,4 +1,4 @@
-import { App, ExpressReceiver, InteractiveMessage } from '@slack/bolt';
+import { App, ExpressReceiver, InteractiveMessage, LogLevel } from '@slack/bolt';
 import dotenv from 'dotenv';
 import { checkUserInOrOut, checkUserIsCheckedInOut } from './appwrite';
 import { getTimeFromTimestamp } from './dev';
@@ -19,6 +19,12 @@ const receiver = new ExpressReceiver({
 const app = new App({
   token: SLACK_BOT_TOKEN,
   receiver,
+  port: Number(process.env.PORT) || 3000,
+  logLevel: LogLevel.DEBUG,
+});
+
+app.use(async ({ next }) => {
+  await next();
 });
 
 export interface User {
