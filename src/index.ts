@@ -249,6 +249,10 @@ receiver.router.get('/auth/slack', async (req, res) => {
   }
 });
 
+receiver.router.get('/test', async (req, res) => {
+  res.send('Hello World');
+});
+
 // Start your app
 (async () => {
   await app.start(process.env.PORT || 3000);
