@@ -251,6 +251,10 @@ receiver.router.get('/auth/slack', async (req, res) => {
   }
 });
 
+receiver.router.get('/', async (req, res) => {
+  res.send('Home!');
+});
+
 (async () => {
   // Start your app
   await app.start();
