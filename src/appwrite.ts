@@ -1,6 +1,6 @@
 import { Databases, ID, Query, Client } from 'node-appwrite';
 import dotenv from 'dotenv';
-import { User } from '.';
+import { User } from './app';
 dotenv.config();
 
 const client = new Client()
