@@ -2,7 +2,7 @@
   "name": "check-in-out",
   "version": "1.0.0",
   "description": "A simple app for checking in/out",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon api/index.ts",
     "build": "tsc -p .",
