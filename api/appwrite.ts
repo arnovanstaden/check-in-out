@@ -10,6 +10,7 @@ const client = new Client()
 
 const databases = new Databases(client);
 
+
 const dbID = 'daily_checks';
 const checkInCollectionID = '66a223d00038c475eb4c';
 const checkOutCollectionID = '66a223d8000e32b6fb1e';

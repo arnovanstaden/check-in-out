@@ -21,9 +21,6 @@ const app = new App({
   receiver,
 });
 
-let checkedInUsers: { id: string, name: string }[] = [];
-let checkedOutUsers: { id: string, name: string }[] = [];
-
 export interface User {
   id: string;
   name: string;
@@ -249,12 +246,10 @@ receiver.router.get('/auth/slack', async (req, res) => {
   }
 });
 
-receiver.router.get('/test', async (req, res) => {
-  res.send('Hello World');
-});
+// // Start your app
+// (async () => {
+//   await app.start(process.env.PORT || 3000);
+//   console.log('⚡️ Bolt app is running!');
+// })();
 
-// Start your app
-(async () => {
-  await app.start(process.env.PORT || 3000);
-  console.log('⚡️ Bolt app is running!');
-})();
+export default receiver.app;
