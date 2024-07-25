@@ -5,10 +5,10 @@
     "strict": true,
     "esModuleInterop": true,
     "outDir": "./dist",
-    "rootDir": "api"
+    "rootDir": "src"
   },
   "include": [
-    "api/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules"
