@@ -4,8 +4,8 @@
   "description": "A simple app for checking in/out",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "dev": "nodemon src/index.ts"
+    "start": "ts-node api/index.ts",
+    "dev": "nodemon api/index.ts"
   },
   "author": "",
   "license": "ISC",

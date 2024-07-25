@@ -1,11 +1,9 @@
-import appWrite, { Databases, ID, Query } from 'node-appwrite';
+import { Databases, ID, Query, Client } from 'node-appwrite';
 import dotenv from 'dotenv';
 import { User } from '.';
 dotenv.config();
 
-let client = new appWrite.Client();
-
-client
+const client = new Client()
   .setEndpoint('https://cloud.appwrite.io/v1')
   .setProject('slack-check-in-out')
   .setKey(process.env.APPWRITE_API_KEY!);
@@ -30,26 +28,36 @@ export const checkUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'
     Query.lessThan('timestamp', endOfDay),
   ];
 
-  const result = await databases.listDocuments(
-    dbID,
-    type === 'in' ? checkInCollectionID : checkOutCollectionID,
-    query,
-  );
+  try {
+    const result = await databases.listDocuments(
+      dbID,
+      type === 'in' ? checkInCollectionID : checkOutCollectionID,
+      query,
+    );
 
-  return result.total > 0;
+    return result.total > 0;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }
 
 export const checkUserInOrOut = async (userId: string, userName: string, type: 'in' | 'out'): Promise<User> => {
-  const res = await databases.createDocument(
-    dbID,
-    type === 'in' ? checkInCollectionID : checkOutCollectionID,
-    ID.unique(),
-    {
-      id: userId,
-      name: userName.charAt(0).toUpperCase() + userName.slice(1),
-      timestamp: new Date().toISOString(),
-    },
-  );
+  try {
+    const res = await databases.createDocument(
+      dbID,
+      type === 'in' ? checkInCollectionID : checkOutCollectionID,
+      ID.unique(),
+      {
+        id: userId,
+        name: userName.charAt(0).toUpperCase() + userName.slice(1),
+        timestamp: new Date().toISOString(),
+      },
+    );
 
-  return res as unknown as User;
+    return res as unknown as User;
+  } catch (error) {
+    console.error(error);
+    return {} as User;
+  }
 }
