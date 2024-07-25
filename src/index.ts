@@ -261,5 +261,3 @@ receiver.router.get('/', async (req, res) => {
 
   console.log('⚡️ Bolt app is running!');
 })();
-
-module.exports = app;
