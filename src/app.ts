@@ -38,6 +38,7 @@ app.command('/checkin', async ({ command, ack, respond }) => {
   const { user_id, user_name, channel_id } = command;
 
   const userIsCheckedIn = await checkUserIsCheckedInOut(user_id, 'in');
+  console.log('userIsCheckedIn', userIsCheckedIn);
   if (userIsCheckedIn) {
     await respond({
       text: `You are already checked in :(.`,
@@ -47,7 +48,7 @@ app.command('/checkin', async ({ command, ack, respond }) => {
   }
 
   const newlyCheckedInUser = await checkUserInOrOut(user_id, user_name, 'in');
-
+  console.log('newlyCheckedInUser', newlyCheckedInUser);
   try {
     await app.client.chat.postMessage({
       token: process.env.SLACK_BOT_TOKEN,
