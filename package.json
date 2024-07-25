@@ -2,11 +2,10 @@
   "name": "check-in-out",
   "version": "1.0.0",
   "description": "A simple app for checking in/out",
-  "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts",
-    "build": "tsc -p .",
-    "start": "npm run build && node dist/index.js"
+    "dev": "nodemon src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js"
   },
   "author": "",
   "license": "ISC",

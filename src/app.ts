@@ -242,7 +242,6 @@ receiver.router.get('/auth/slack', async (req, res) => {
       redirect_uri: 'https://yourapp.com/auth/slack',
     });
 
-    const { access_token, team } = response;
     // Save access token and team info to your database
     res.send('Your app has been installed!');
   } catch (error) {
