@@ -169,7 +169,7 @@ app.command('/checkout', async ({ command, ack, respond, client }) => {
   }
 
   const userInfo = await getUserInfo(client as unknown as WebClient, user_id, user_name);
-  const newlyCheckedInUser = await checkUserInOrOut(userInfo, 'in');
+  const newlyCheckedInUser = await checkUserInOrOut(userInfo, 'out');
 
   // Join the channel before sending a message
   try {
@@ -239,7 +239,7 @@ app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, client }) 
 
   const { message_ts, original_message } = interactiveBody;
   const userInfo = await getUserInfo(client as unknown as WebClient, userId, userName);
-  const newlyCheckedInUser = await checkUserInOrOut(userInfo, 'in');
+  const newlyCheckedInUser = await checkUserInOrOut(userInfo, 'out');
 
   const oldBlocks = original_message!.blocks ? original_message!.blocks as unknown as Block[] : [];
 
