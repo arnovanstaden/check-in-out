@@ -32,10 +32,10 @@ const dbID = 'daily_checks';
 const checkInCollectionID = '66a223d00038c475eb4c';
 const checkOutCollectionID = '66a223d8000e32b6fb1e';
 
-const now = new Date();
-const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
-
+const now = moment().utc();
+const startOfDay = now.clone().startOf('day').toISOString();
+const endOfDay = now.clone().endOf('day').toISOString();
+console.log(now, startOfDay, endOfDay);
 /**
  * Check if a user is already checked in or out
  */
