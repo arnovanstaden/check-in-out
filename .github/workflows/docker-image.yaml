@@ -27,3 +27,11 @@ jobs:
         with:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/slack-check-in-out:latest
+
+      - name: Notify Deployment Webhook
+        env:
+          WEBHOOK_URL: ${{ secrets.DEPLOYMENT_WEBHOOK_URL }}
+        run: |
+          curl -X POST $WEBHOOK_URL \
+          -H "Content-Type: application/json" \
+          -d '{"message": "Deployment restarted due to new Docker image push."}'
