@@ -36,7 +36,7 @@ app.command('/checkin', async ({ command, ack, respond }) => {
   console.log('userIsCheckedIn', userIsCheckedIn);
   if (userIsCheckedIn) {
     await respond({
-      text: `You are already checked in :(.`,
+      text: `You are already checked in today :(.`,
       response_type: 'ephemeral'
     });
     return
@@ -87,7 +87,7 @@ app.action({ callback_id: 'check_in_callback' }, async ({ body, ack, respond }) 
   const userIsCheckedIn = await checkUserIsCheckedInOut(userId, 'in');
   if (userIsCheckedIn) {
     await respond({
-      text: `You are already checked in :(.`,
+      text: `You are already checked in today :(.`,
       response_type: 'ephemeral'
     });
     return
@@ -134,7 +134,7 @@ app.command('/checkout', async ({ command, ack, respond }) => {
   const userIsCheckedOut = await checkUserIsCheckedInOut(user_id, 'out');
   if (userIsCheckedOut) {
     await respond({
-      text: `You are already checked out :(.`,
+      text: `You are already checked out today :(.`,
       response_type: 'ephemeral'
     });
     return
@@ -188,7 +188,7 @@ app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, respond })
   const userIsCheckedOut = await checkUserIsCheckedInOut(userId, 'out');
   if (userIsCheckedOut) {
     await respond({
-      text: `You are already checked out :(.`,
+      text: `You are already checked out today :(.`,
       response_type: 'ephemeral'
     });
     return
