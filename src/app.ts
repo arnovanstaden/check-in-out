@@ -85,9 +85,11 @@ app.action({ callback_id: 'check_in_callback' }, async ({ body, ack, respond }) 
 
   const userIsCheckedIn = await checkUserIsCheckedInOut(userId, 'in');
   if (userIsCheckedIn) {
-    await respond({
+    await app.client.chat.postEphemeral({
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: interactiveBody.channel.id,
+      user: userId,
       text: `You are already checked in today :(.`,
-      response_type: 'ephemeral'
     });
     return
   }
@@ -186,9 +188,11 @@ app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, respond })
 
   const userIsCheckedOut = await checkUserIsCheckedInOut(userId, 'out');
   if (userIsCheckedOut) {
-    await respond({
+    await app.client.chat.postEphemeral({
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: interactiveBody.channel.id,
+      user: userId,
       text: `You are already checked out today :(.`,
-      response_type: 'ephemeral'
     });
     return
   }
@@ -227,11 +231,11 @@ app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, respond })
 });
 
 // OAuth handler
-receiver.router.get('/auth/slack', async (req, res) => {
+receiver.router.get('/slack/auth', async (req, res) => {
   const { code } = req.query;
 
   try {
-    const response = await app.client.oauth.v2.access({
+    await app.client.oauth.v2.access({
       client_id: SLACK_CLIENT_ID,
       client_secret: SLACK_CLIENT_SECRET,
       code: code as string,
