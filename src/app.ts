@@ -13,7 +13,6 @@ const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET!;
 const receiver = new ExpressReceiver({
   signingSecret: SLACK_SIGNING_SECRET,
   endpoints: '/slack/events',
-  logLevel: LogLevel.DEBUG,
 });
 
 // Initializes your app with your bot token and signing secret
@@ -33,7 +32,7 @@ app.command('/checkin', async ({ command, ack, respond }) => {
   const { user_id, user_name, channel_id } = command;
 
   const userIsCheckedIn = await checkUserIsCheckedInOut(user_id, 'in');
-  console.log('userIsCheckedIn', userIsCheckedIn);
+
   if (userIsCheckedIn) {
     await respond({
       text: `You are already checked in today :(.`,
@@ -43,7 +42,7 @@ app.command('/checkin', async ({ command, ack, respond }) => {
   }
 
   const newlyCheckedInUser = await checkUserInOrOut(user_id, user_name, 'in');
-  console.log('newlyCheckedInUser', newlyCheckedInUser);
+
   try {
     await app.client.chat.postMessage({
       token: process.env.SLACK_BOT_TOKEN,
