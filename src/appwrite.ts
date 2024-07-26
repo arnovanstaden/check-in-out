@@ -1,7 +1,25 @@
 import { Databases, ID, Query, Client } from 'node-appwrite';
 import dotenv from 'dotenv';
-import { User } from './app';
+import { SlackUser } from './user';
+import moment from 'moment-timezone';
+import { getTimeToDisplay } from './dev';
 dotenv.config();
+
+
+export interface DBUser {
+  id: string;
+  name: string;
+  /**
+   * In UTC
+   */
+  timestamp: string;
+  tz_offset: number;
+  /*
+The time the check in or check out was made as string with optional timezone
+  */
+  time: string;
+}
+
 
 const client = new Client()
   .setEndpoint('https://cloud.appwrite.io/v1')
@@ -9,7 +27,6 @@ const client = new Client()
   .setKey(process.env.APPWRITE_API_KEY!);
 
 const databases = new Databases(client);
-
 
 const dbID = 'daily_checks';
 const checkInCollectionID = '66a223d00038c475eb4c';
@@ -43,22 +60,30 @@ export const checkUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'
   }
 }
 
-export const checkUserInOrOut = async (userId: string, userName: string, type: 'in' | 'out'): Promise<User> => {
+
+
+export const checkUserInOrOut = async (user: SlackUser, type: 'in' | 'out'): Promise<DBUser> => {
+  const currentUTCTimestamp = moment().utc().toISOString();
+
   try {
     const res = await databases.createDocument(
       dbID,
       type === 'in' ? checkInCollectionID : checkOutCollectionID,
       ID.unique(),
       {
-        id: userId,
-        name: userName.charAt(0).toUpperCase() + userName.slice(1),
-        timestamp: new Date().toISOString(),
+        id: user.id,
+        name: user.name,
+        timestamp: currentUTCTimestamp,
+        tz_offset: user.tz_offset,
       },
     );
 
-    return res as unknown as User;
+    return {
+      ...res,
+      time: getTimeToDisplay(res.timestamp, res.tz_offset),
+    } as unknown as DBUser;
   } catch (error) {
     console.error(error);
-    return {} as User;
+    return {} as DBUser;
   }
 }

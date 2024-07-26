@@ -2,6 +2,9 @@ import { App, ExpressReceiver, InteractiveMessage, LogLevel } from '@slack/bolt'
 import dotenv from 'dotenv';
 import { checkUserInOrOut, checkUserIsCheckedInOut } from './appwrite';
 import { getTimeFromTimestamp } from './dev';
+import { getUserInfo } from './user';
+import { WebClient } from '@slack/web-api';
+
 dotenv.config();
 
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET!;
@@ -21,33 +24,40 @@ const app = new App({
   receiver,
 });
 
-export interface User {
-  id: string;
-  name: string;
-  timestamp: string;
-}
-
-app.command('/checkin', async ({ command, ack, respond }) => {
+app.command('/checkin', async ({ command, ack, respond, client }) => {
   await ack();
   const { user_id, user_name, channel_id } = command;
 
   const userIsCheckedIn = await checkUserIsCheckedInOut(user_id, 'in');
+  // if (userIsCheckedIn) {
+  //   await respond({
+  //     text: `You are already checked in today :(.`,
+  //     response_type: 'ephemeral'
+  //   });
+  //   return
+  // }
 
-  if (userIsCheckedIn) {
-    await respond({
-      text: `You are already checked in today :(.`,
-      response_type: 'ephemeral'
-    });
-    return
-  }
-
-  const newlyCheckedInUser = await checkUserInOrOut(user_id, user_name, 'in');
+  const userInfo = await getUserInfo(client as unknown as WebClient, user_id, user_name);
+  const newlyCheckedInUser = await checkUserInOrOut(userInfo, 'in');
 
   try {
     await app.client.chat.postMessage({
       token: process.env.SLACK_BOT_TOKEN,
       channel: channel_id,
-      text: `✔️ *${newlyCheckedInUser.name}* checked in at ${getTimeFromTimestamp(newlyCheckedInUser.timestamp)}`,
+      blocks: [{
+        type: "context",
+        elements: [
+          {
+            type: "image",
+            image_url: userInfo.image,
+            alt_text: "cute cat"
+          },
+          {
+            type: "mrkdwn",
+            text: `*${userInfo.name}* checked in at ${newlyCheckedInUser.time}`,
+          }
+        ]
+      }],
       attachments: [
         {
           text: 'Who else is here?',
@@ -71,164 +81,164 @@ app.command('/checkin', async ({ command, ack, respond }) => {
   }
 });
 
-app.action({ callback_id: 'check_in_callback' }, async ({ body, ack, respond }) => {
-  try {
-    await ack();
-  } catch (error) {
-    console.error('Error acknowledging action:', error);
-  }
+// app.action({ callback_id: 'check_in_callback' }, async ({ body, ack, respond }) => {
+//   try {
+//     await ack();
+//   } catch (error) {
+//     console.error('Error acknowledging action:', error);
+//   }
 
-  const interactiveBody = body as InteractiveMessage;
-  const { message_ts, original_message } = interactiveBody;
-  const userId = interactiveBody.user.id;
-  const userName = interactiveBody.user.name.charAt(0).toUpperCase() + interactiveBody.user.name.slice(1);
+//   const interactiveBody = body as InteractiveMessage;
+//   const { message_ts, original_message } = interactiveBody;
+//   const userId = interactiveBody.user.id;
+//   const userName = interactiveBody.user.name.charAt(0).toUpperCase() + interactiveBody.user.name.slice(1);
 
-  const userIsCheckedIn = await checkUserIsCheckedInOut(userId, 'in');
-  if (userIsCheckedIn) {
-    await app.client.chat.postEphemeral({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: interactiveBody.channel.id,
-      user: userId,
-      text: `You are already checked in today :(.`,
-    });
-    return
-  }
+//   const userIsCheckedIn = await checkUserIsCheckedInOut(userId, 'in');
+//   if (userIsCheckedIn) {
+//     await app.client.chat.postEphemeral({
+//       token: process.env.SLACK_BOT_TOKEN,
+//       channel: interactiveBody.channel.id,
+//       user: userId,
+//       text: `You are already checked in today :(.`,
+//     });
+//     return
+//   }
 
-  const newlyCheckedInUser = await checkUserInOrOut(userId, userName, 'in');
-  const userCheckInText = `✔️ *${newlyCheckedInUser.name}* checked in at ${getTimeFromTimestamp(newlyCheckedInUser.timestamp)}`;
-  const newMessageText = original_message ? `${original_message.text}\n${userCheckInText}` : userCheckInText;
+//   const newlyCheckedInUser = await checkUserInOrOut(userId, userName, 'in');
+//   const userCheckInText = `✔️ *${newlyCheckedInUser.name}* checked in at ${getTimeFromTimestamp(newlyCheckedInUser.timestamp)}`;
+//   const newMessageText = original_message ? `${original_message.text}\n${userCheckInText}` : userCheckInText;
 
-  // Update the original message with the list of checked-in users
-  try {
-    await app.client.chat.update({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: body.channel!.id!,
-      ts: message_ts!,
-      text: newMessageText,
-      attachments: [
-        {
-          text: 'Who else is here?',
-          fallback: 'You are unable to check in',
-          callback_id: 'check_in_callback',
-          color: '#3AA3E3',
-          actions: [
-            {
-              name: 'check_in',
-              text: 'Check In',
-              type: 'button',
-              value: 'check_in',
-            },
-          ],
-        },
-      ],
-    });
-  } catch (error) {
-    console.error('Error updating message:', error);
-  }
-});
+//   // Update the original message with the list of checked-in users
+//   try {
+//     await app.client.chat.update({
+//       token: process.env.SLACK_BOT_TOKEN,
+//       channel: body.channel!.id!,
+//       ts: message_ts!,
+//       text: newMessageText,
+//       attachments: [
+//         {
+//           text: 'Who else is here?',
+//           fallback: 'You are unable to check in',
+//           callback_id: 'check_in_callback',
+//           color: '#3AA3E3',
+//           actions: [
+//             {
+//               name: 'check_in',
+//               text: 'Check In',
+//               type: 'button',
+//               value: 'check_in',
+//             },
+//           ],
+//         },
+//       ],
+//     });
+//   } catch (error) {
+//     console.error('Error updating message:', error);
+//   }
+// });
 
-// Handle the /checkout command
-app.command('/checkout', async ({ command, ack, respond }) => {
-  await ack();
-  const { user_id, user_name, channel_id } = command;
+// // Handle the /checkout command
+// app.command('/checkout', async ({ command, ack, respond }) => {
+//   await ack();
+//   const { user_id, user_name, channel_id } = command;
 
-  const userIsCheckedOut = await checkUserIsCheckedInOut(user_id, 'out');
-  if (userIsCheckedOut) {
-    await respond({
-      text: `You are already checked out today :(.`,
-      response_type: 'ephemeral'
-    });
-    return
-  }
+//   const userIsCheckedOut = await checkUserIsCheckedInOut(user_id, 'out');
+//   if (userIsCheckedOut) {
+//     await respond({
+//       text: `You are already checked out today :(.`,
+//       response_type: 'ephemeral'
+//     });
+//     return
+//   }
 
-  const newlyCheckedOutUser = await checkUserInOrOut(user_id, user_name, 'out');
+//   const newlyCheckedOutUser = await checkUserInOrOut(user_id, user_name, 'out');
 
-  // Join the channel before sending a message
-  try {
-    // Send a message with a "Check Out" button
-    await app.client.chat.postMessage({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: channel_id,
-      text: `✔️ *${newlyCheckedOutUser.name}* checked out at ${getTimeFromTimestamp(newlyCheckedOutUser.timestamp)}`, attachments: [
-        {
-          text: 'Who else is out?',
-          fallback: 'An error occurred while trying to check out',
-          callback_id: 'check_out_callback',
-          color: '#3AA3E3',
-          actions: [
-            {
-              name: 'check_out',
-              text: 'Check Out',
-              type: 'button',
-              value: 'check_out',
-            },
-          ],
-        },
-      ],
-    });
+//   // Join the channel before sending a message
+//   try {
+//     // Send a message with a "Check Out" button
+//     await app.client.chat.postMessage({
+//       token: process.env.SLACK_BOT_TOKEN,
+//       channel: channel_id,
+//       text: `✔️ *${newlyCheckedOutUser.name}* checked out at ${getTimeFromTimestamp(newlyCheckedOutUser.timestamp)}`, attachments: [
+//         {
+//           text: 'Who else is out?',
+//           fallback: 'An error occurred while trying to check out',
+//           callback_id: 'check_out_callback',
+//           color: '#3AA3E3',
+//           actions: [
+//             {
+//               name: 'check_out',
+//               text: 'Check Out',
+//               type: 'button',
+//               value: 'check_out',
+//             },
+//           ],
+//         },
+//       ],
+//     });
 
-  } catch (error) {
-    console.error('Error sending message:', error);
-  }
-});
+//   } catch (error) {
+//     console.error('Error sending message:', error);
+//   }
+// });
 
-// Handle the check_out button action
-app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, respond }) => {
+// // Handle the check_out button action
+// app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, respond }) => {
+//   try {
+//     await ack();
+//   } catch (error) {
+//     console.error('Error acknowledging action:', error);
+//   }
 
-  try {
-    await ack();
-  } catch (error) {
-    console.error('Error acknowledging action:', error);
-  }
+//   const interactiveBody = body as InteractiveMessage;
+//   const { message_ts, original_message } = interactiveBody;
+//   const userId = interactiveBody.user.id;
+//   const userName = interactiveBody.user.name.charAt(0).toUpperCase() + interactiveBody.user.name.slice(1);
 
-  const interactiveBody = body as InteractiveMessage;
-  const { message_ts, original_message } = interactiveBody;
-  const userId = interactiveBody.user.id;
-  const userName = interactiveBody.user.name.charAt(0).toUpperCase() + interactiveBody.user.name.slice(1);
+//   const userIsCheckedOut = await checkUserIsCheckedInOut(userId, 'out');
+//   if (userIsCheckedOut) {
+//     await app.client.chat.postEphemeral({
+//       token: process.env.SLACK_BOT_TOKEN,
+//       channel: interactiveBody.channel.id,
+//       user: userId,
+//       text: `You are already checked out today :(.`,
+//     });
+//     return
+//   }
 
-  const userIsCheckedOut = await checkUserIsCheckedInOut(userId, 'out');
-  if (userIsCheckedOut) {
-    await app.client.chat.postEphemeral({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: interactiveBody.channel.id,
-      user: userId,
-      text: `You are already checked out today :(.`,
-    });
-    return
-  }
+//   const newlyCheckedOutUser = await checkUserInOrOut(userId, userName, 'out');
+//   const userCheckOutText = `✔️ *${newlyCheckedOutUser.name}* checked out at ${getTimeFromTimestamp(newlyCheckedOutUser.timestamp)}`;
+//   const newMessageText = original_message ? `${original_message.text}\n${userCheckOutText}` : userCheckOutText;
 
-  const newlyCheckedOutUser = await checkUserInOrOut(userId, userName, 'out');
-  const userCheckOutText = `✔️ *${newlyCheckedOutUser.name}* checked out at ${getTimeFromTimestamp(newlyCheckedOutUser.timestamp)}`;
-  const newMessageText = original_message ? `${original_message.text}\n${userCheckOutText}` : userCheckOutText;
-  // Update the original message with the list of checked-out users
-  try {
-    await app.client.chat.update({
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: body.channel!.id!,
-      ts: message_ts!,
-      text: newMessageText,
-      attachments: [
-        {
-          text: 'Who else is out?',
-          fallback: 'You are unable to check out',
-          callback_id: 'check_out_callback',
-          color: '#3AA3E3',
-          actions: [
-            {
-              name: 'check_out',
-              text: 'Check Out',
-              type: 'button',
-              value: 'check_out',
-            },
-          ],
-        },
-      ],
-    });
+//   // Update the original message with the list of checked-out users
+//   try {
+//     await app.client.chat.update({
+//       token: process.env.SLACK_BOT_TOKEN,
+//       channel: body.channel!.id!,
+//       ts: message_ts!,
+//       text: newMessageText,
+//       attachments: [
+//         {
+//           text: 'Who else is out?',
+//           fallback: 'You are unable to check out',
+//           callback_id: 'check_out_callback',
+//           color: '#3AA3E3',
+//           actions: [
+//             {
+//               name: 'check_out',
+//               text: 'Check Out',
+//               type: 'button',
+//               value: 'check_out',
+//             },
+//           ],
+//         },
+//       ],
+//     });
 
-  } catch (error) {
-    console.error('Error updating message:', error);
-  }
-});
+//   } catch (error) {
+//     console.error('Error updating message:', error);
+//   }
+// });
 
 // OAuth handler
 receiver.router.get('/slack/auth', async (req, res) => {
