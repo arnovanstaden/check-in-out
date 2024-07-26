@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nodemon src/app.ts",
     "build": "tsc",
+    "build:docker": "docker build -f ./dockerfile -t slack-check-in-out .",
     "start": "node dist/app.js"
   },
   "author": "",
