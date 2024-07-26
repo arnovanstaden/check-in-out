@@ -20,7 +20,6 @@ const receiver = new ExpressReceiver({
 const app = new App({
   token: SLACK_BOT_TOKEN,
   receiver,
-  port: Number(process.env.PORT) || 3000,
 });
 
 export interface User {
@@ -258,6 +257,8 @@ receiver.router.head('/uptime', async (req, res) => {
 
 (async () => {
   // Start your app
-  await app.start();
+  await app.start({
+    port: Number(process.env.PORT) || 3000,
+  });
   console.log('⚡️ Bolt app is running!');
 })();
