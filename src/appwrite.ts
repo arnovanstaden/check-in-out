@@ -35,11 +35,13 @@ const checkOutCollectionID = '66a223d8000e32b6fb1e';
 const now = moment().utc();
 const startOfDay = now.clone().startOf('day').toISOString();
 const endOfDay = now.clone().endOf('day').toISOString();
-console.log(now, startOfDay, endOfDay);
+
 /**
  * Check if a user is already checked in or out
  */
 export const checkUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'): Promise<boolean> => {
+  console.log(startOfDay, endOfDay);
+
   const query = [
     Query.equal('id', userId),
     Query.greaterThanEqual('timestamp', startOfDay),
@@ -52,7 +54,7 @@ export const checkUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'
       type === 'in' ? checkInCollectionID : checkOutCollectionID,
       query,
     );
-
+    console.log(result)
     return result.total > 0;
   } catch (error) {
     console.error(error);
