@@ -1,6 +1,6 @@
 import { App, ExpressReceiver, InteractiveMessage, Block } from '@slack/bolt';
 import dotenv from 'dotenv';
-import { checkUserInOrOut, checkUserIsCheckedInOut } from './appwrite';
+import { checkUserInOrOut, verifyCheckInOutProcessAlreadyStarted, verifyUserIsCheckedInOut } from './appwrite';
 import { getTimeFromTimestamp } from './dev';
 import { getUserInfo } from './user';
 import { WebClient } from '@slack/web-api';
@@ -28,7 +28,16 @@ app.command('/checkin', async ({ command, ack, respond, client }) => {
   await ack();
   const { user_id, user_name, channel_id } = command;
 
-  const userIsCheckedIn = await checkUserIsCheckedInOut(user_id, 'in');
+  const processAlreadyStartedForToday = await verifyCheckInOutProcessAlreadyStarted('in');
+  if (processAlreadyStartedForToday) {
+    await respond({
+      text: `Someone has already started the check-in process for today.`,
+      response_type: 'ephemeral'
+    });
+    return
+  }
+
+  const userIsCheckedIn = await verifyUserIsCheckedInOut(user_id, 'in');
   if (userIsCheckedIn) {
     await respond({
       text: `You are already checked in today :(.`,
@@ -92,7 +101,7 @@ app.action({ callback_id: 'check_in_callback' }, async ({ body, ack, client }) =
   const userId = interactiveBody.user.id;
   const userName = interactiveBody.user.name;
 
-  const userIsCheckedIn = await checkUserIsCheckedInOut(userId, 'in');
+  const userIsCheckedIn = await verifyUserIsCheckedInOut(userId, 'in');
   if (userIsCheckedIn) {
     await app.client.chat.postEphemeral({
       token: process.env.SLACK_BOT_TOKEN,
@@ -159,7 +168,16 @@ app.command('/checkout', async ({ command, ack, respond, client }) => {
   await ack();
   const { user_id, user_name, channel_id } = command;
 
-  const userIsCheckedOut = await checkUserIsCheckedInOut(user_id, 'out');
+  const processAlreadyStartedForToday = await verifyCheckInOutProcessAlreadyStarted('out');
+  if (processAlreadyStartedForToday) {
+    await respond({
+      text: `Someone has already started the check-out process for today.`,
+      response_type: 'ephemeral'
+    });
+    return
+  }
+
+  const userIsCheckedOut = await verifyUserIsCheckedInOut(user_id, 'out');
   if (userIsCheckedOut) {
     await respond({
       text: `You are already checked out today :(.`,
@@ -225,7 +243,7 @@ app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, client }) 
   const userId = interactiveBody.user.id;
   const userName = interactiveBody.user.name;
 
-  const userIsCheckedOut = await checkUserIsCheckedInOut(userId, 'out');
+  const userIsCheckedOut = await verifyUserIsCheckedInOut(userId, 'out');
   if (userIsCheckedOut) {
     await app.client.chat.postEphemeral({
       token: process.env.SLACK_BOT_TOKEN,

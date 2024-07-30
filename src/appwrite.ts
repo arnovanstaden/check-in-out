@@ -39,7 +39,7 @@ const endOfDay = now.clone().endOf('day').toISOString();
 /**
  * Check if a user is already checked in or out
  */
-export const checkUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'): Promise<boolean> => {
+export const verifyUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'): Promise<boolean> => {
   const query = [
     Query.equal('id', userId),
     Query.greaterThanEqual('timestamp', startOfDay),
@@ -59,7 +59,24 @@ export const checkUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'
   }
 }
 
+export const verifyCheckInOutProcessAlreadyStarted = async (type: 'in' | 'out'): Promise<boolean> => {
+  const query = [
+    Query.greaterThanEqual('timestamp', startOfDay),
+    Query.lessThan('timestamp', endOfDay),
+  ];
 
+  try {
+    const result = await databases.listDocuments(
+      dbID,
+      type === 'in' ? checkInCollectionID : checkOutCollectionID,
+      query,
+    );
+    return result.total > 0;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
 
 export const checkUserInOrOut = async (user: SlackUser, type: 'in' | 'out'): Promise<DBUser> => {
   const currentUTCTimestamp = moment().utc().toISOString();
