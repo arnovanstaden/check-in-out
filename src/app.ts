@@ -1,6 +1,6 @@
 import { App, ExpressReceiver, InteractiveMessage, Block } from '@slack/bolt';
 import dotenv from 'dotenv';
-import { checkUserInOrOut, verifyCheckInOutProcessAlreadyStarted, verifyUserIsCheckedInOut } from './appwrite';
+import { checkUserInOrOut, getUserWhoStartedProcess, verifyUserIsCheckedInOut } from './appwrite';
 import { getTimeFromTimestamp } from './dev';
 import { getUserInfo } from './user';
 import { WebClient } from '@slack/web-api';
@@ -28,11 +28,11 @@ app.command('/checkin', async ({ command, ack, respond, client }) => {
   await ack();
   const { user_id, user_name, channel_id } = command;
 
-  const processAlreadyStartedForToday = await verifyCheckInOutProcessAlreadyStarted('in');
-  if (processAlreadyStartedForToday) {
+  const userWhoStartedCheckInProcess = await getUserWhoStartedProcess('in');
+  if (userWhoStartedCheckInProcess) {
     await respond({
-      text: `Someone has already started the check-in process for today.`,
-      response_type: 'ephemeral'
+      text: `${userWhoStartedCheckInProcess.name} has already started the check-in process for today at ${userWhoStartedCheckInProcess.time}.`,
+      response_type: 'ephemeral',
     });
     return
   }
@@ -168,11 +168,11 @@ app.command('/checkout', async ({ command, ack, respond, client }) => {
   await ack();
   const { user_id, user_name, channel_id } = command;
 
-  const processAlreadyStartedForToday = await verifyCheckInOutProcessAlreadyStarted('out');
-  if (processAlreadyStartedForToday) {
+  const userWhoStartedCheckInProcess = await getUserWhoStartedProcess('out');
+  if (userWhoStartedCheckInProcess) {
     await respond({
-      text: `Someone has already started the check-out process for today.`,
-      response_type: 'ephemeral'
+      text: `${userWhoStartedCheckInProcess.name} has already started the check-out process for today at ${userWhoStartedCheckInProcess.time}.`,
+      response_type: 'ephemeral',
     });
     return
   }
