@@ -73,6 +73,8 @@ export const getUserWhoStartedProcess = async (type: 'in' | 'out'): Promise<DBUs
       query,
     );
 
+    console.log(startOfDay, endOfDay);
+    console.log(result.documents);
     const userWhoStarted = result.documents[0]
     if (!userWhoStarted) {
       return null;
