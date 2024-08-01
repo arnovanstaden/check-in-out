@@ -4,6 +4,7 @@ import { checkUserInOrOut, getUserWhoStartedProcess, verifyUserIsCheckedInOut } 
 import { getTimeFromTimestamp } from './dev';
 import { getUserInfo } from './user';
 import { WebClient } from '@slack/web-api';
+import moment from 'moment-timezone';
 
 dotenv.config();
 
@@ -261,7 +262,6 @@ app.action({ callback_id: 'check_out_callback' }, async ({ body, ack, client }) 
 
   const oldBlocks = original_message!.blocks ? original_message!.blocks as unknown as Block[] : [];
 
-
   // Update the original message with the list of checked-out users
   try {
     await app.client.chat.update({
@@ -332,6 +332,11 @@ receiver.router.get('/', async (req, res) => {
   res.send('Home!');
 });
 
+receiver.router.get('/checkin', async (req, res) => {
+  const userWhoStartedCheckInProcess = await getUserWhoStartedProcess('in');
+  res.json(userWhoStartedCheckInProcess);
+});
+
 receiver.router.head('/uptime', async (req, res) => {
   res.send('OK');
 });
@@ -342,4 +347,6 @@ receiver.router.head('/uptime', async (req, res) => {
     port: Number(process.env.PORT) || 3000,
   });
   console.log('⚡️ Bolt app is running!');
+  const now = moment().utc();
+  console.log('Current time:', now.toISOString());
 })();
