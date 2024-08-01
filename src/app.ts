@@ -332,11 +332,6 @@ receiver.router.get('/', async (req, res) => {
   res.send('Home!');
 });
 
-receiver.router.get('/checkin', async (req, res) => {
-  const userWhoStartedCheckInProcess = await getUserWhoStartedProcess('in');
-  res.json(userWhoStartedCheckInProcess);
-});
-
 receiver.router.head('/uptime', async (req, res) => {
   res.send('OK');
 });

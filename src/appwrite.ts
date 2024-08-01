@@ -32,14 +32,28 @@ const dbID = 'daily_checks';
 const checkInCollectionID = '66a223d00038c475eb4c';
 const checkOutCollectionID = '66a223d8000e32b6fb1e';
 
-const now = moment().utc();
-const startOfDay = now.clone().startOf('day').toISOString();
-const endOfDay = now.clone().endOf('day').toISOString();
+const getTimestamps = (): {
+  startOfDay: string;
+  endOfDay: string;
+  now: moment.Moment;
+} => {
+  const now = moment().utc();
+  const startOfDay = now.clone().startOf('day').toISOString();
+  const endOfDay = now.clone().endOf('day').toISOString();
+
+  return {
+    startOfDay,
+    endOfDay,
+    now,
+  };
+};
 
 /**
  * Check if a user is already checked in or out
  */
 export const verifyUserIsCheckedInOut = async (userId: string, type: 'in' | 'out'): Promise<boolean> => {
+  const { startOfDay, endOfDay } = getTimestamps();
+
   const query = [
     Query.equal('id', userId),
     Query.greaterThanEqual('timestamp', startOfDay),
@@ -60,10 +74,7 @@ export const verifyUserIsCheckedInOut = async (userId: string, type: 'in' | 'out
 }
 
 export const getUserWhoStartedProcess = async (type: 'in' | 'out'): Promise<DBUser | null> => {
-  console.log(`Getting user who started check-${type} process`);
-  console.log(`Time - Now: ${now}`);
-  console.log(`Time - Start of day: ${startOfDay}`);
-  console.log(`Time - End of day: ${endOfDay}`);
+  const { startOfDay, endOfDay } = getTimestamps();
 
   const query = [
     Query.greaterThanEqual('timestamp', startOfDay),
@@ -79,7 +90,6 @@ export const getUserWhoStartedProcess = async (type: 'in' | 'out'): Promise<DBUs
     );
 
     const userWhoStarted = result.documents[0]
-    console.log(`User who started check-${type} process`, userWhoStarted);
 
     if (!userWhoStarted) {
       return null;
