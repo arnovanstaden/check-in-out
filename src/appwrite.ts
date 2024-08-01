@@ -61,8 +61,9 @@ export const verifyUserIsCheckedInOut = async (userId: string, type: 'in' | 'out
 
 export const getUserWhoStartedProcess = async (type: 'in' | 'out'): Promise<DBUser | null> => {
   console.log(`Getting user who started check-${type} process`);
-  console.log(`Start of day: ${startOfDay}`);
-  console.log(`End of day: ${endOfDay}`);
+  console.log(`Time - Now: ${now}`);
+  console.log(`Time - Start of day: ${startOfDay}`);
+  console.log(`Time - End of day: ${endOfDay}`);
 
   const query = [
     Query.greaterThanEqual('timestamp', startOfDay),
