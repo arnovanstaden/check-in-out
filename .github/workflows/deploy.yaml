@@ -44,5 +44,5 @@ jobs:
           # Assuming you've already built and pushed your Docker image
           # Deploy the Docker image by updating the Elastic Beanstalk environment
           aws elasticbeanstalk update-environment \
-            --environment-name your-environment-name \
+            --environment-name web-slack-check-in-out \
             --version-label v_${{ github.sha }}
