@@ -28,21 +28,26 @@ jobs:
           push: true
           tags: tandemfrontend/slack-check-in-out:latest
 
-  deploy-to-eb:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Deploy to Elastic Beanstalk
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Install AWS CLI and EB CLI
         run: |
-          # Assuming you've already built and pushed your Docker image
-          # Deploy the Docker image by updating the Elastic Beanstalk environment
-          aws elasticbeanstalk update-environment \
-            --environment-name Web-slack-check-in-out-env \
-            --version-label v_${{ github.sha }}
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install awsebcli
+
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          eb init -p docker web-slack-check-in-out --region ${{ secrets.AWS_REGION }}
+          eb deploy
