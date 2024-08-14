@@ -1,3 +1,9 @@
 node_modules
 .env
 dist
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+Dockerrun.aws.json
