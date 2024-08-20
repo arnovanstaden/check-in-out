@@ -1,11 +1,11 @@
 {
-  "name": "check-in-out",
+  "name": "web-slack-check-in",
   "version": "1.0.0",
   "description": "A simple app for checking in/out",
   "scripts": {
     "dev": "nodemon src/app.ts",
     "build": "tsc",
-    "build:docker": "docker build -f ./dockerfile -t slack-check-in-out .",
+    "build:docker": "docker build -f ./dockerfile -t tandemstaging.azurecr.io/web-slack-check-in:latest .",
     "start": "node dist/app.js"
   },
   "author": "",
